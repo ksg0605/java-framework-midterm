@@ -48,4 +48,35 @@ public class UserDaoTests {
         assertThat(user.getName(), is(name));
         assertThat(user.getPassword(), is(password));
     }
+
+    @Test
+    public void testHallaGet() throws SQLException, ClassNotFoundException {
+        Integer id = 1;
+        String name = "hulk";
+        String password = "1234";
+        UserDao userDao = new UserDao();
+        User user = userDao.hallaGet(id);
+        assertThat(user.getId(), is(id));
+        assertThat(user.getName(), is(name));
+        assertThat(user.getPassword(), is(password));
+    }
+
+    @Test
+    public void testHallaInsert() throws SQLException, ClassNotFoundException {
+        String name = "hulk";
+        String password = "1234";
+
+        User user = new User();
+        user.setName(name);
+        user.setPassword(password);
+
+        UserDao userDao = new UserDao();
+        userDao.hallaInsert(user);
+
+        assertThat(user.getId(), greaterThan(0));
+
+        User insertedUser = userDao.get(user.getId());
+        assertThat(user.getName(), is(name));
+        assertThat(user.getPassword(), is(password));
+    }
 }
