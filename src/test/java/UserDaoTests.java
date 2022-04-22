@@ -7,6 +7,7 @@ import java.sql.SQLException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 
 /**
@@ -60,4 +61,42 @@ public class UserDaoTests {
         assertThat(insertedUser.getPassword(), is(password));
     }
 
+    @Test
+    public void testUpdate() throws SQLException {
+        String name = "hulk";
+        String password = "1234";
+
+        User user = new User();
+        user.setName(name);
+        user.setPassword(password);
+        userDao.insert(user);
+
+        String updatedName = "허윤호";
+        String updatedPassword = "1111";
+
+        user.setName(updatedName);
+        user.setPassword(updatedPassword);
+
+        userDao.update(user);
+        User updatedUser = userDao.get(user.getId());
+
+        assertThat(updatedUser.getName(), is(updatedName));
+        assertThat(updatedUser.getPassword(), is(updatedPassword));
+    }
+
+    @Test
+    public void testDelete() throws SQLException {
+        String name = "hulk";
+        String password = "1234";
+
+        User user = new User();
+        user.setName(name);
+        user.setPassword(password);
+        userDao.insert(user);
+
+        userDao.delete(user.getId());
+
+        User deletedUser = userDao.get(user.getId());
+        assertThat(deletedUser, nullValue());
+    }
 }

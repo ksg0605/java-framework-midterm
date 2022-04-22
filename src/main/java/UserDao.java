@@ -1,5 +1,4 @@
-import javax.sql.DataSource;
-import java.sql.*;
+import java.sql.SQLException;
 
 /**
  * packageName            : PACKAGE_NAME
@@ -14,91 +13,33 @@ import java.sql.*;
  */
 public class UserDao {
 
-    private final DataSource dataSource;
+    private final JdbcContext jdbcContext;
 
-    public UserDao(DataSource dataSource) {
-        this.dataSource = dataSource;
+    public UserDao(JdbcContext jdbcContext) {
+        this.jdbcContext = jdbcContext;
     }
 
-    public User get(Integer id) throws ClassNotFoundException, SQLException {
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-        User user = null;
-        ResultSet resultSet = null;
-
-        try {
-            connection = dataSource.getConnection();
-            preparedStatement =
-                    connection.prepareStatement("select * from userinfo where id = ?");
-            preparedStatement.setInt(1, id);
-
-            resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                user = new User();
-                user.setId(resultSet.getInt("id"));
-                user.setName(resultSet.getString("name"));
-                user.setPassword(resultSet.getString("password"));
-
-            }
-
-        } finally {
-            try {
-                resultSet.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            try {
-                preparedStatement.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            try {
-                connection.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }
-
-        return user;
+    public User get(Integer id) throws SQLException {
+        StatementStrategy statementStrategy = new GetStatementStrategy(id);
+        return jdbcContext.jdbcContextForGet(statementStrategy);
     }
 
-    public void insert(User user) throws ClassNotFoundException, SQLException {
-        Connection connection = null;
-        PreparedStatement preparedStatement = null;
-        ResultSet resultSet = null;
 
-        try {
-            connection = dataSource.getConnection();
-            preparedStatement =
-                    connection.prepareStatement("insert into userinfo (name, password) values (?, ?)", Statement.RETURN_GENERATED_KEYS);
-            preparedStatement.setString(1, user.getName());
-            preparedStatement.setString(2, user.getPassword());
-
-            preparedStatement.executeUpdate();
-            resultSet = preparedStatement.getGeneratedKeys();
-            resultSet.next();
-
-            user.setId(resultSet.getInt(1));
-
-
-        } finally {
-            try {
-                resultSet.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            try {
-                preparedStatement.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            try {
-                connection.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }
+    public void insert(User user) throws SQLException {
+        StatementStrategy statementStrategy = new InsertStatementStrategy(user);
+        jdbcContext.jdbcContextForInsert(user, statementStrategy);
     }
+
+
+    public void update(User user) throws SQLException {
+        StatementStrategy statementStrategy = new UpdateStatementStrategy(user);
+        jdbcContext.jdbcContextForUpdate(statementStrategy);
+    }
+
+
+    public void delete(Integer id) throws SQLException {
+        StatementStrategy statementStrategy = new DeleteStatementStrategy(id);
+        jdbcContext.jdbcContextForUpdate(statementStrategy);
+    }
+
 }
