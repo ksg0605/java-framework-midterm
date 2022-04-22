@@ -1,3 +1,4 @@
+import javax.sql.DataSource;
 import java.sql.*;
 
 /**
@@ -13,34 +14,55 @@ import java.sql.*;
  */
 public class UserDao {
 
-    private final ConnectionMaker connectionMaker;
+    private final DataSource dataSource;
 
-    public UserDao(ConnectionMaker connectionmaker) {
-        this.connectionMaker = connectionmaker;
+    public UserDao(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     public User get(Integer id) throws ClassNotFoundException, SQLException {
-        Connection connection = connectionMaker.getConnection();
-        PreparedStatement preparedStatement =
-                connection.prepareStatement("select * from userinfo where id = ?");
-        preparedStatement.setInt(1, id);
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        User user = null;
+        ResultSet resultSet = null;
 
-        ResultSet resultSet = preparedStatement.executeQuery();
-        resultSet.next();
+        try {
+            connection = dataSource.getConnection();
+            preparedStatement =
+                    connection.prepareStatement("select * from userinfo where id = ?");
+            preparedStatement.setInt(1, id);
 
-        User user = new User();
-        user.setId(resultSet.getInt("id"));
-        user.setName(resultSet.getString("name"));
-        user.setPassword(resultSet.getString("password"));
+            resultSet = preparedStatement.executeQuery();
+            resultSet.next();
 
-        resultSet.close();
-        preparedStatement.close();
-        connection.close();
+            user = new User();
+            user.setId(resultSet.getInt("id"));
+            user.setName(resultSet.getString("name"));
+            user.setPassword(resultSet.getString("password"));
+        } finally {
+            try {
+                resultSet.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            try {
+                preparedStatement.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            try {
+                connection.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+
         return user;
     }
 
     public void insert(User user) throws ClassNotFoundException, SQLException {
-        Connection connection = connectionMaker.getConnection();
+        Connection connection = dataSource.getConnection();
         PreparedStatement preparedStatement =
                 connection.prepareStatement("insert into userinfo (name, password) values (?, ?)", Statement.RETURN_GENERATED_KEYS);
         preparedStatement.setString(1, user.getName());
